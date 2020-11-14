@@ -1,4 +1,20 @@
-## JEE/ CDI Integration
+## JDBC Identity store with the following goals
+
+- compatible to spring boot
+- compatible to Java EE / CDI
+- provide a read through/ fallback cache for users, if the DB is gone
+- provide a cache for users, to limit request count to thr DB
+- provide a password cache to reduce the overhead of BCrypt for password checks - keeping BCrypt Hash in the DB
+
+## Maven include
+
+```xml
+<dependency>
+    <groupId>org.sterl.identitystore.jdbc</groupId>
+    <artifactId>jdbc-identity-store</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+</dependency>
+```
 
 ### IdentityStore configuration 
 ```java
@@ -8,9 +24,9 @@
 public class ApplicationConfiguration extends Application {
  
     @Resource(lookup = "jdbc/identity-store") DataSource dataSource;
+
     @Produces
     @ApplicationScoped
-    // @Priority(70)
     public org.sterl.identitystore.api.IdentityStore jdbcIdentityStore() {
         final org.sterl.identitystore.api.IdentityStore is = IdentityStoreBuilder.jdbcBuilder(dataSource)
                 .withCache(Duration.ofMinutes(15))
@@ -99,4 +115,76 @@ public class JdbcSecurityConfig extends WebSecurityConfigurerAdapter {
                 }
             }
         });
-``
+```
+
+## Load Test
+
+- 100 concurrent Threads
+- 10.000 requests
+- simple hello world resource
+- local postgreSQL DB with three users
+
+### Spring Boot with build in JDBC with BCrypt
+
+```
+GET.http://localhost:8080
+             count = 10000
+         mean rate = 1336,95 calls/second
+     1-minute rate = 305,00 calls/second
+     5-minute rate = 305,00 calls/second
+    15-minute rate = 305,00 calls/second
+               min = 1,54 milliseconds
+               max = 4793,98 milliseconds
+              mean = 67,24 milliseconds
+            stddev = 406,63 milliseconds
+            median = 26,20 milliseconds
+              75% <= 33,47 milliseconds
+              95% <= 68,99 milliseconds
+              98% <= 127,74 milliseconds
+              99% <= 396,62 milliseconds
+            99.9% <= 4680,78 milliseconds
+```
+
+### Spring boot with jdbc-identity-store - no password cache
+- With enabled cache
+
+```
+GET.http://localhost:8080
+             count = 10000
+         mean rate = 1740,52 calls/second
+     1-minute rate = 1497,20 calls/second
+     5-minute rate = 1497,20 calls/second
+    15-minute rate = 1497,20 calls/second
+               min = 1,75 milliseconds
+               max = 2503,71 milliseconds
+              mean = 51,06 milliseconds
+            stddev = 202,91 milliseconds
+            median = 31,03 milliseconds
+              75% <= 39,60 milliseconds
+              95% <= 75,31 milliseconds
+              98% <= 111,44 milliseconds
+              99% <= 149,81 milliseconds
+            99.9% <= 2379,19 milliseconds 
+```
+
+### Spring boot with jdbc-identity-store - with password cache
+- With enabled cache
+- With enabled password cache
+```
+GET.http://localhost:8080
+             count = 10000
+         mean rate = 3401,78 calls/second
+     1-minute rate = 0,00 calls/second
+     5-minute rate = 0,00 calls/second
+    15-minute rate = 0,00 calls/second
+               min = 1,45 milliseconds
+               max = 297,67 milliseconds
+              mean = 28,26 milliseconds
+            stddev = 29,05 milliseconds
+            median = 22,83 milliseconds
+              75% <= 29,87 milliseconds
+              95% <= 57,20 milliseconds
+              98% <= 116,14 milliseconds
+              99% <= 156,62 milliseconds
+            99.9% <= 286,60 milliseconds
+```

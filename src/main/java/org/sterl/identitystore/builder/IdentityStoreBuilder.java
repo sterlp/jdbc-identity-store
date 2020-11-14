@@ -87,7 +87,7 @@ public class IdentityStoreBuilder {
     /**
      * Query to load the user password form the JDBC store e.g.:
      * <pre>select password from users where username = ?</pre>
-     * @param the query to load the hashed user password
+     * @param passwordQuery the query to load the hashed user password
      * @return this for chaining
      */
     public IdentityStoreBuilder withPasswordQuery(String passwordQuery) {
