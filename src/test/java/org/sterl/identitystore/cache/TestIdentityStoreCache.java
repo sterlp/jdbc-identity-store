@@ -1,6 +1,7 @@
 package org.sterl.identitystore.cache;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -87,5 +88,27 @@ public class TestIdentityStoreCache {
         assertEquals(Status.VALID, subject.verify(USER_NAME, "fo1").getStatus());
         assertEquals(null, subject.verify(USER_NAME, "fo1").getGroups());
         verify(wrapped, times(2)).load(anyString());
+    }
+    
+    @Test
+    void overTakeRawPassword() throws Exception {
+        subject = new IdentityStoreCache(
+                wrapped, 
+                Duration.ofNanos(1), true);
+        
+        assertEquals(Status.VALID, subject.verify(USER_NAME, USER_PASS).getStatus());
+        assertEquals(USER_PASS, ((CachedIdentity)subject.loadWithFallbackToCache(USER_NAME)).getRawPassword());
+        
+        // we should overtake it
+        Thread.sleep(1);
+        assertEquals(USER_PASS, ((CachedIdentity)subject.loadWithFallbackToCache(USER_NAME)).getRawPassword());
+        
+        // if the password is changed we should not overtake the password anymore
+        identity = new Identity(USER_NAME, hasher.encode("foobar"), Identity.from("admin"));
+        when(wrapped.load(anyString())).thenReturn(identity);
+        assertNull(((CachedIdentity)subject.loadWithFallbackToCache(USER_NAME)).getRawPassword());
+        
+        assertEquals(Status.VALID, subject.verify(USER_NAME, "foobar").getStatus());
+        assertEquals(Status.INVALID_PASSWORD, subject.verify(USER_NAME, USER_PASS).getStatus());
     }
 }

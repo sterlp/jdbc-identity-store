@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.sterl.hash.PasswordHasher;
@@ -12,13 +11,14 @@ import org.sterl.identitystore.api.VerificationResult.Status;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
 
 /**
  * Representation of a stored identity with it roles.
  * 
  * @author sterlp
  */
-@AllArgsConstructor @Getter
+@AllArgsConstructor @Getter @ToString
 public class Identity {
     @SuppressWarnings("unchecked")
     public static final Identity NOT_FOUND = new Identity(null, null, Collections.EMPTY_SET);

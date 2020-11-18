@@ -7,18 +7,20 @@ import org.sterl.identitystore.api.Identity;
 import org.sterl.identitystore.api.VerificationResult;
 import org.sterl.identitystore.api.VerificationResult.Status;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import lombok.ToString;
 
-@AllArgsConstructor
+@AllArgsConstructor @ToString(of = {"identity", "cachedTime"})
 class CachedIdentity {
     @Getter @NonNull
     private final Identity identity;
     @Getter
     private final long cachedTime;
-    @Setter
+    @Setter @Getter(value = AccessLevel.PACKAGE)
     private String rawPassword;
     
     /**

@@ -61,21 +61,31 @@ public class IdentityStoreCache implements IdentityStore {
         return loadWithFallbackToCache(username).getIdentity();
     }
     
-    private CachedIdentity loadWithFallbackToCache(String username) {
-        CachedIdentity identity = cache.get(username);
-        if (identity == null || identity.isTimeout(cacheDuration)) {
+    CachedIdentity loadWithFallbackToCache(String username) {
+        final CachedIdentity cachedIdentity = cache.get(username);
+        CachedIdentity result;
+        if (cachedIdentity == null || cachedIdentity.isTimeout(cacheDuration)) {
             try {
-                identity = loadAndCache(username);
+                result = loadAndCache(username);
+                
+                if (cachedIdentity != null && cachedIdentity.getRawPassword() != null
+                        && cachedIdentity.getIdentity().getHashedPassword().equals(result.getIdentity().getHashedPassword())) {
+                    result.setRawPassword(cachedIdentity.getRawPassword());
+                }
+                
             } catch (Exception e) {
-                if (identity == null) throw e;
+                if (cachedIdentity == null) throw e;
                 else {
+                    result = cachedIdentity;
                     LOG.log(Level.WARNING, "Failed to load " + username 
                             + " from " + wrapped.getClass().getSimpleName() 
                             + ", fallback to cached value.", e);
                 }
             }
+        } else {
+            result = cachedIdentity;
         }
-        return identity;
+        return result;
     }
 
     /**
