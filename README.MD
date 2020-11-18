@@ -16,6 +16,22 @@
 </dependency>
 ```
 
+## DB Schema
+
+```sql
+CREATE TABLE users (
+  username VARCHAR(50) NOT NULL,
+  password VARCHAR(250) NOT NULL,
+  PRIMARY KEY (username)
+);
+  
+CREATE TABLE groups (
+  username VARCHAR(50) NOT NULL REFERENCES users(username) on delete cascade on update cascade,
+  usergroup VARCHAR(50) NOT NULL,
+  PRIMARY key (username, usergroup)
+);
+```
+
 ### IdentityStore configuration 
 ```java
 @BasicAuthenticationMechanismDefinition(realmName = "bar")
@@ -31,8 +47,6 @@ public class ApplicationConfiguration extends Application {
         final org.sterl.identitystore.api.IdentityStore is = IdentityStoreBuilder.jdbcBuilder(dataSource)
                 .withCache(Duration.ofMinutes(15))
                 .withCachedPassword(true)
-                .withPasswordQuery("select password from users where enabled = true AND username = ?")
-                .withGroupsQuery("select authority from authorities where username = ?")
                 .build();
         
         return is;
@@ -56,17 +70,24 @@ public class JavaEEIdentityStore implements IdentityStore {
     @Inject org.sterl.identitystore.api.IdentityStore is;
     
     public CredentialValidationResult validate(BasicAuthenticationCredential credential) {
-        VerificationResult vr = is.verify(credential.getCaller(), credential.getPasswordAsString());
-        return new CredentialValidationResult(credential.getCaller(), vr.getGroups());
+        return validate(credential.getCaller(),  credential.getPasswordAsString());
     }
 
     public CredentialValidationResult validate(UsernamePasswordCredential credential) {
-        VerificationResult vr = is.verify(credential.getCaller(), credential.getPasswordAsString());
-        return new CredentialValidationResult(credential.getCaller(), vr.getGroups());
+        return validate(credential.getCaller(),  credential.getPasswordAsString());
+    }
+    
+    private CredentialValidationResult validate(String user, String password) {
+        final VerificationResult vr = is.verify(user, password);
+        if (vr.getStatus() == VerificationResult.Status.VALID) {
+            return new CredentialValidationResult(user, vr.getGroups());
+        } else {
+            return CredentialValidationResult.INVALID_RESULT;
+        }
+        
     }
 }
 ```
-
 
 ### Spring Boot integration
 
@@ -117,14 +138,20 @@ public class JdbcSecurityConfig extends WebSecurityConfigurerAdapter {
         });
 ```
 
-## Load Test
-
+# Load Test
+## Setup
 - 100 concurrent Threads
 - 10.000 requests
 - simple hello world resource
 - local postgreSQL DB with three users
 
+*Note:* The performance overhead in this load test comes from BCrypt
+
+## Spring Boot integration
+
 ### Spring Boot with build in JDBC with BCrypt
+
+- SPring Boot does already some caching here ...
 
 ```
 GET.http://localhost:8080
@@ -145,29 +172,8 @@ GET.http://localhost:8080
             99.9% <= 4680,78 milliseconds
 ```
 
-### Spring boot with jdbc-identity-store - no password cache
-- With enabled cache
-
-```
-GET.http://localhost:8080
-             count = 10000
-         mean rate = 1740,52 calls/second
-     1-minute rate = 1497,20 calls/second
-     5-minute rate = 1497,20 calls/second
-    15-minute rate = 1497,20 calls/second
-               min = 1,75 milliseconds
-               max = 2503,71 milliseconds
-              mean = 51,06 milliseconds
-            stddev = 202,91 milliseconds
-            median = 31,03 milliseconds
-              75% <= 39,60 milliseconds
-              95% <= 75,31 milliseconds
-              98% <= 111,44 milliseconds
-              99% <= 149,81 milliseconds
-            99.9% <= 2379,19 milliseconds 
-```
-
 ### Spring boot with jdbc-identity-store - with password cache
+
 - With enabled cache
 - With enabled password cache
 ```
@@ -187,4 +193,56 @@ GET.http://localhost:8080
               98% <= 116,14 milliseconds
               99% <= 156,62 milliseconds
             99.9% <= 286,60 milliseconds
+```
+
+## Payara 4.1.2.181 / 5.2
+
+- HTTP Thread Pool adjusted to 100 threads
+
+### Payara @DatabaseIdentityStoreDefinition (soteria)
+
+Using the build in JDBC store with @DatabaseIdentityStoreDefinition
+No caches, basically shows the performance of BCrypt.
+
+```
+GET.http://localhost:8080
+             count = 10000
+         mean rate = 55,18 calls/second
+     1-minute rate = 55,55 calls/second
+     5-minute rate = 49,15 calls/second
+    15-minute rate = 46,04 calls/second
+               min = 1690,44 milliseconds
+               max = 2244,49 milliseconds
+              mean = 1765,04 milliseconds
+            stddev = 54,04 milliseconds
+            median = 1755,14 milliseconds
+              75% <= 1787,40 milliseconds
+              95% <= 1843,73 milliseconds
+              98% <= 1913,47 milliseconds
+              99% <= 1969,66 milliseconds
+            99.9% <= 2225,13 milliseconds
+```
+
+### Payara with the IdentityStore with cache - with password cache
+
+- With enabled cache
+- With enabled password cache
+
+```
+GET.http://localhost:8080
+             count = 10000
+         mean rate = 2406,80 calls/second
+     1-minute rate = 0,00 calls/second
+     5-minute rate = 0,00 calls/second
+    15-minute rate = 0,00 calls/second
+               min = 19,02 milliseconds
+               max = 291,96 milliseconds
+              mean = 41,81 milliseconds
+            stddev = 27,25 milliseconds
+            median = 37,95 milliseconds
+              75% <= 42,98 milliseconds
+              95% <= 56,20 milliseconds
+              98% <= 60,47 milliseconds
+              99% <= 265,43 milliseconds
+            99.9% <= 286,92 milliseconds
 ```
