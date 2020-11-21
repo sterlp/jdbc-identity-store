@@ -1,3 +1,5 @@
+![JDBC Identity CI](https://github.com/sterlp/jdbc-identity-store/workflows/Java%20CI%20with%20Maven/badge.svg)
+
 ## JDBC Identity store with the following goals
 
 - compatible to spring boot
