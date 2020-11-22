@@ -34,6 +34,11 @@ CREATE TABLE groups (
 );
 ```
 
+## Example Projects
+
+- Spring Boot: https://github.com/sterlp/training/blob/master/spring-jdbc-security/src/main/java/org/sterl/training/spring/jdbcsecurity/springjdbcsecurity/JdbcSecurityConfig.java#L43
+- CDI Java EE: https://github.com/sterlp/training/blob/master/jee-jdbc-identity-store/src/main/java/org/sterl/training/ee/identitystore/JdbcIdentityStore.java
+
 ### IdentityStore configuration 
 ```java
 @BasicAuthenticationMechanismDefinition(realmName = "bar")
