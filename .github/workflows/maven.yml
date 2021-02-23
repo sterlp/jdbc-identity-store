@@ -26,7 +26,7 @@ jobs:
     - name: PMD
       run: mvn pmd:pmd pmd:cpd pmd:check pmd:cpd-check
     - name: Build and Publish
-      run: mvn -B deploy --file pom.xml
+      run: mvn -B install deploy --file pom.xml
       env:
         MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
         MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
