@@ -37,7 +37,7 @@ public class TestIdentityStores {
         ds.setUser("sa");
         datasource = ds;
         schema = new String(Files.readAllBytes(Paths.get(
-                TestIdentityStores.class.getResource("/schema.sql").getFile())));
+                TestIdentityStores.class.getResource("/drop-create-default-shema.sql").getFile())));
         datasource = ds;
     }
 
@@ -46,10 +46,7 @@ public class TestIdentityStores {
         try (Connection c = datasource.getConnection()) {
             c.setAutoCommit(false);
             try (Statement s = c.createStatement()) {
-                s.execute("DROP TABLE groups if exists");
-                s.execute("DROP TABLE users if exists");
                 s.execute(schema);
-                // System.out.println(schema);
             }
             c.commit();
         }

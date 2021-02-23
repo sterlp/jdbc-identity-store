@@ -53,6 +53,8 @@ public class IdentityStoreBuilder {
      * Enables the cache for identities, default is <code>no cache</code>. 
      * Set <code>null</code> to turn off the cache.
      * 
+     * Will fallback to the cache entry is case of a reload problem.
+     * 
      * @param duration the time after which the identity should be reloaded, including the roles.
      * @return this for chaining
      */

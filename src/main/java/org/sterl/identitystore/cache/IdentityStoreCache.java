@@ -11,6 +11,7 @@ import org.sterl.identitystore.api.IdentityStore;
 import org.sterl.identitystore.api.VerificationResult;
 import org.sterl.identitystore.api.VerificationResult.Status;
 
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
@@ -28,9 +29,15 @@ public class IdentityStoreCache implements IdentityStore {
     private static Logger LOG = Logger.getLogger(IdentityStoreCache.class.getSimpleName());
     @NonNull
     private final IdentityStore wrapped;
-    @NonNull
+
+    /**
+     * The time after which the identity should be reloaded, including the roles.
+     * Will fallback to the cache entry is case of a reload problem.
+     */
+    @NonNull @Getter
     private final Duration cacheDuration;
     /** Allows to cache the real password to increase the performance using cached entries */
+    @Getter
     private final boolean cacheRealPassword;
     private final ConcurrentHashMap<String, CachedIdentity> cache = new ConcurrentHashMap<>();
 

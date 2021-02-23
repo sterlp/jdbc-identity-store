@@ -1,3 +1,4 @@
+
 package org.sterl.identitystore.api;
 
 import java.util.Collections;
