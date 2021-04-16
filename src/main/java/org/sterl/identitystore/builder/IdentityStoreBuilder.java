@@ -8,7 +8,7 @@ import org.sterl.hash.Algorithm;
 import org.sterl.hash.BCryptPbkdf2PasswordHash;
 import org.sterl.hash.PasswordHasher;
 import org.sterl.identitystore.api.IdentityStore;
-import org.sterl.identitystore.cache.IdentityStoreCache;
+import org.sterl.identitystore.cache.CachedIdentityStore;
 import org.sterl.identitystore.jdbc.JdbcIdentityStore;
 
 import lombok.RequiredArgsConstructor;
@@ -121,7 +121,7 @@ public class IdentityStoreBuilder {
         
         // wrap the JDBC store if the cache is enabled
         if (cacheDuration != null) {
-            result = new IdentityStoreCache(result, cacheDuration, cachePassword);
+            result = new CachedIdentityStore(result, cacheDuration, cachePassword);
         }
 
         return result;

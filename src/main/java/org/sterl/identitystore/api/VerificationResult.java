@@ -27,4 +27,8 @@ public class VerificationResult {
 
     private final Status status;
     private final Set<String> groups;
+    /** Indicates if this result is returned from the cache instead from the DB. */
+    private boolean cacheHit = false;
+    /** If an error was handled it is saved here */
+    private Exception suppressedError;
 }

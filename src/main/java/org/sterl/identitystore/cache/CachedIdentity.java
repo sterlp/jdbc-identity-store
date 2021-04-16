@@ -8,13 +8,14 @@ import org.sterl.identitystore.api.VerificationResult;
 import org.sterl.identitystore.api.VerificationResult.Status;
 
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-@AllArgsConstructor @ToString(of = {"identity", "cachedTime"})
+@RequiredArgsConstructor 
+@ToString(of = {"identity", "cachedTime"})
 class CachedIdentity {
     @Getter @NonNull
     private final Identity identity;
@@ -23,6 +24,13 @@ class CachedIdentity {
     @Setter @Getter(value = AccessLevel.PACKAGE)
     private String rawPassword;
     
+    /** Indicates if this result is returned from the cache*/
+    @Setter @Getter
+    private boolean cacheHit = false;
+    /** If an error was handled it is saved here */
+    @Setter @Getter
+    private Exception suppressedError = null;
+
     /**
      * Verifies the given password using the given hasher, if the {@link #rawPassword} is
      * set it will be used in the first place to check the password.

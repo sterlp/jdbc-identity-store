@@ -23,7 +23,7 @@ public interface IdentityStore {
      * Method primely used to chain {@link IdentityStore} using the composite pattern.
      * This method should use {@link Identity#NOT_FOUND} instead of <code>null</code>.
      * 
-     * @param username the username to search for
+     * @param username the user name to search for
      * @return the found {@link Identity} in the {@link IdentityStore}, should never the <code>null</code>
      */
     Identity load(String username);

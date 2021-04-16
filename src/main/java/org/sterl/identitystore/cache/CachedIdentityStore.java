@@ -2,8 +2,6 @@ package org.sterl.identitystore.cache;
 
 import java.time.Duration;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.sterl.hash.PasswordHasher;
 import org.sterl.identitystore.api.Identity;
@@ -25,8 +23,7 @@ import lombok.RequiredArgsConstructor;
  * @author sterlp
  */
 @RequiredArgsConstructor
-public class IdentityStoreCache implements IdentityStore {
-    private static Logger LOG = Logger.getLogger(IdentityStoreCache.class.getSimpleName());
+public class CachedIdentityStore implements IdentityStore {
     @NonNull
     private final IdentityStore wrapped;
 
@@ -55,6 +52,8 @@ public class IdentityStoreCache implements IdentityStore {
         if (cacheRealPassword && result.getStatus() == Status.VALID) {
             identity.setRawPassword(inputPassword);
         }
+        result.setCacheHit(identity.isCacheHit());
+        result.setSuppressedError(identity.getSuppressedError());
         return result;
     }
 
@@ -74,23 +73,23 @@ public class IdentityStoreCache implements IdentityStore {
         if (cachedIdentity == null || cachedIdentity.isTimeout(cacheDuration)) {
             try {
                 result = loadAndCache(username);
-                
+
                 if (cachedIdentity != null && cachedIdentity.getRawPassword() != null
                         && cachedIdentity.getIdentity().getHashedPassword().equals(result.getIdentity().getHashedPassword())) {
                     result.setRawPassword(cachedIdentity.getRawPassword());
                 }
-                
+
             } catch (Exception e) {
                 if (cachedIdentity == null) throw e;
                 else {
                     result = cachedIdentity;
-                    LOG.log(Level.WARNING, "Failed to load " + username 
-                            + " from " + wrapped.getClass().getSimpleName() 
-                            + ", fallback to cached value.", e);
+                    result.setCacheHit(true);
+                    result.setSuppressedError(e);
                 }
             }
         } else {
             result = cachedIdentity;
+            result.setCacheHit(true);
         }
         return result;
     }
@@ -100,7 +99,7 @@ public class IdentityStoreCache implements IdentityStore {
      */
     private CachedIdentity loadAndCache(String username) {
         final CachedIdentity result = new CachedIdentity(wrapped.load(username), 
-                System.currentTimeMillis(), null);
+                System.currentTimeMillis());
         // do not cache not found users
         if (result.getIdentity() != Identity.NOT_FOUND) {
             cache.put(username, result);

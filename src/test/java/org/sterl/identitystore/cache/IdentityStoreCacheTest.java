@@ -1,6 +1,7 @@
 package org.sterl.identitystore.cache;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -16,9 +17,10 @@ import org.junit.jupiter.api.Test;
 import org.sterl.hash.BCryptPbkdf2PasswordHash;
 import org.sterl.identitystore.api.Identity;
 import org.sterl.identitystore.api.IdentityStore;
+import org.sterl.identitystore.api.VerificationResult;
 import org.sterl.identitystore.api.VerificationResult.Status;
 
-public class TestIdentityStoreCache {
+public class IdentityStoreCacheTest {
 
     private static final String USER_NAME = "user";
     private static final String USER_PASS = "pass";
@@ -26,14 +28,14 @@ public class TestIdentityStoreCache {
     final BCryptPbkdf2PasswordHash hasher = new BCryptPbkdf2PasswordHash();
     final String password = hasher.encode(USER_PASS);
     IdentityStore wrapped;
-    IdentityStoreCache subject;
+    CachedIdentityStore subject;
     Identity identity;
     
     @BeforeEach
     void before() {
         wrapped = mock(IdentityStore.class);
 
-        subject = new IdentityStoreCache(
+        subject = new CachedIdentityStore(
                 wrapped, 
                 Duration.ofHours(1), true);
         
@@ -44,8 +46,13 @@ public class TestIdentityStoreCache {
     
     @Test
     void testCallsWrapperOnce() {
-        assertEquals(Status.VALID, subject.verify(USER_NAME, USER_PASS).getStatus());
-        assertEquals(Status.VALID, subject.verify(USER_NAME, USER_PASS).getStatus());
+        VerificationResult verify = subject.verify(USER_NAME, USER_PASS);
+        assertEquals(Status.VALID, verify.getStatus());
+        assertFalse(verify.isCacheHit());
+        
+        verify = subject.verify(USER_NAME, USER_PASS);
+        assertEquals(Status.VALID, verify.getStatus());
+        assertTrue(verify.isCacheHit());
 
         verify(wrapped, times(1)).load(anyString());
     }
@@ -65,16 +72,23 @@ public class TestIdentityStoreCache {
     }
 
     @Test
-    void testFallback() {
-        subject = new IdentityStoreCache(
+    void testFallback() throws Exception {
+        subject = new CachedIdentityStore(
                 wrapped, 
-                Duration.ofMillis(1), true);
+                Duration.ofMillis(2), true);
 
+        assertFalse(subject.verify(USER_NAME, USER_PASS).isCacheHit());
         assertEquals(Status.VALID, subject.verify(USER_NAME, USER_PASS).getStatus());
+        assertNull(subject.verify(USER_NAME, USER_PASS).getSuppressedError());
         
-        when(wrapped.load(anyString())).thenThrow(new RuntimeException("nöö"));
+        final RuntimeException problem = new RuntimeException("nöö");
+        when(wrapped.load(anyString())).thenThrow(problem);
 
+        // still a cache hit ..., because fallback
+        Thread.sleep(2);
         assertEquals(Status.VALID, subject.verify(USER_NAME, USER_PASS).getStatus());
+        assertEquals(problem, subject.verify(USER_NAME, USER_PASS).getSuppressedError());
+        assertTrue(subject.verify(USER_NAME, USER_PASS).isCacheHit());
 
     }
     
@@ -92,7 +106,7 @@ public class TestIdentityStoreCache {
     
     @Test
     void overTakeRawPassword() throws Exception {
-        subject = new IdentityStoreCache(
+        subject = new CachedIdentityStore(
                 wrapped, 
                 Duration.ofNanos(1), true);
         

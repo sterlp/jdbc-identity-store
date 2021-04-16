@@ -38,7 +38,7 @@ class JdbcIdentityStoreDao {
      * Loads the {@link Identity} data using it's user name.
      * 
      * @param username the name of the user
-     * @return the found {@link Identity}, never <code>null</code>
+     * @return the found {@link Identity} or {@link Identity#NOT_FOUND}, never <code>null</code>
      * @throws SQLException if the configures queries are bad or DB connection interrupted
      * @throws IllegalStateException if the password isn't unique
      */

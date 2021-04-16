@@ -25,7 +25,7 @@ import org.sterl.identitystore.api.IdentityStore;
 import org.sterl.identitystore.api.VerificationResult;
 import org.sterl.identitystore.builder.IdentityStoreBuilder;
 
-public class TestIdentityStores {
+public class IdentityStoresTest {
 
     static DataSource datasource;
     static String schema;
@@ -37,7 +37,7 @@ public class TestIdentityStores {
         ds.setUser("sa");
         datasource = ds;
         schema = new String(Files.readAllBytes(Paths.get(
-                TestIdentityStores.class.getResource("/drop-create-default-shema.sql").getFile())));
+                IdentityStoresTest.class.getResource("/drop-create-default-shema.sql").getFile())));
         datasource = ds;
     }
 
