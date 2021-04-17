@@ -6,7 +6,7 @@
 
     <groupId>org.sterl.identitystore.jdbc</groupId>
     <artifactId>jdbc-identity-store</artifactId>
-    <version>0.1.4</version>
+    <version>0.1.5-SNAPSHOT</version>
 
     <inceptionYear>2020</inceptionYear>
 
