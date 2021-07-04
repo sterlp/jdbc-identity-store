@@ -1,4 +1,5 @@
 ![JDBC Identity CI](https://github.com/sterlp/jdbc-identity-store/workflows/Java%20CI%20with%20Maven/badge.svg)
+[![CodeQL](https://github.com/sterlp/jdbc-identity-store/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/sterlp/jdbc-identity-store/actions/workflows/codeql-analysis.yml)
 
 ## JDBC Identity store with the following goals
 
