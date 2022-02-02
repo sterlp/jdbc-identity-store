@@ -23,10 +23,11 @@ jobs:
         server-id: ossrh
         server-username: MAVEN_USERNAME
         server-password: MAVEN_PASSWORD
-    - name: PMD
-      run: mvn pmd:pmd pmd:cpd pmd:check pmd:cpd-check
-    - name: Build and Publish
-      run: mvn -B install deploy --file pom.xml
+    - name: Build
+      run: mvn clean install pmd:pmd pmd:cpd pmd:check pmd:cpd-check
+    - name: Deploy Nexus
+      if: ${{ github.ref == 'refs/heads/main' }}
+      run: mvn -B deploy --file pom.xml
       env:
         MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
         MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
